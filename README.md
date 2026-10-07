@@ -155,14 +155,69 @@ conda activate ticks_py
 
 ## Reference data
 
-| Dataset | Accession / source |
-|---------|--------------------|
-| *I. ricinus* chromosome-level assembly | [GCA_964199275.3](https://www.ncbi.nlm.nih.gov/datasets/genome/GCA_964199275.3/) (IXRI_v3) — used for chromosomal mapping |
-| *I. ricinus* scaffold assembly + OGS1.3 | used for read mapping and transcript assembly |
-| 14 tick genomes | NCBI Datasets; species listed in [`03_phylogeny/tick_species_list.txt`](03_phylogeny/tick_species_list.txt) |
+### Tick genomes
+
+The 14 species assessed with QUAST and BUSCO in
+[`01_data_processing/03_transcriptome_assembly/`](01_data_processing/03_transcriptome_assembly/).
+**Row order matches [`03_phylogeny/tick_species_list.txt`](03_phylogeny/tick_species_list.txt)
+line for line**, and that line number *is* the `SLURM_ARRAY_TASK_ID` — appending
+a species is safe, reordering silently reassigns every array task.
+
+| # | Species | Family | Common name | Accession |
+|---|---------|--------|-------------|-----------|
+| 0 | *Amblyomma americanum* | Ixodidae | Lone star tick | [GCA_030143305.2](https://www.ncbi.nlm.nih.gov/datasets/genome/GCA_030143305.2/) |
+| 1 | *Amblyomma maculatum* | Ixodidae | Gulf Coast tick | [GCA_023969395.1](https://www.ncbi.nlm.nih.gov/datasets/genome/GCA_023969395.1/) |
+| 2 | *Dermacentor albipictus* | Ixodidae | Winter tick | [GCF_038994185.2](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_038994185.2/) |
+| 3 | *Dermacentor andersoni* | Ixodidae | Rocky Mountain wood tick | [GCF_023375885.2](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_023375885.2/) |
+| 4 | *Dermacentor silvarum* | Ixodidae | Pasture tick | [GCF_013339745.2](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_013339745.2/) |
+| 5 | *Dermacentor variabilis* | Ixodidae | American dog tick | [GCA_049308735.1](https://www.ncbi.nlm.nih.gov/datasets/genome/GCA_049308735.1/) |
+| 6 | *Hyalomma asiaticum* | Ixodidae | Asian tick | [GCA_013339685.2](https://www.ncbi.nlm.nih.gov/datasets/genome/GCA_013339685.2/) |
+| 7 | *Haemaphysalis longicornis* | Ixodidae | Asian longhorned tick | [GCA_013339765.2](https://www.ncbi.nlm.nih.gov/datasets/genome/GCA_013339765.2/) |
+| 8 | *Ixodes persulcatus* | Ixodidae | Taiga tick | [GCA_964199295.2](https://www.ncbi.nlm.nih.gov/datasets/genome/GCA_964199295.2/) |
+| 9 | ***Ixodes ricinus*** ★ | Ixodidae | European / sheep tick | [BIPAA assembly 1.0](https://bipaa.genouest.org/sp/ixodes_ricinus/download/ixodes_ricinus/assembly_1.0/fasta/) |
+| 10 | *Ixodes scapularis* | Ixodidae | Black-legged tick | [GCA_031841145.1](https://www.ncbi.nlm.nih.gov/datasets/genome/GCA_031841145.1/) |
+| 11 | *Ornithodoros turicata* | **Argasidae** | Relapsing fever tick | [GCF_037126465.1](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_037126465.1/) |
+| 12 | *Rhipicephalus microplus* | Ixodidae | Cattle tick | [GCF_013339725.1](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_013339725.1/) |
+| 13 | *Rhipicephalus sanguineus* | Ixodidae | Brown dog tick | [GCF_013339695.2](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_013339695.2/) |
+
+★ = focal species of this study.
+
+Composition: 13 Ixodidae (hard ticks) and a single Argasidae, *O. turicata*,
+which serves as the **soft-tick outgroup**. By genus: 4 *Dermacentor*,
+3 *Ixodes*, 2 *Amblyomma*, 2 *Rhipicephalus*, 1 *Hyalomma*, 1 *Haemaphysalis*.
+
+Two things to watch:
+
+- **`H_asiaticum` and `H_longicornis` are different genera** — *Hyalomma* and
+  *Haemaphysalis* respectively. The abbreviations in `tick_species_list.txt`
+  collide, so always resolve them against this table rather than guessing.
+- 6 assemblies are **GCF** (RefSeq, with NCBI annotation) and 7 are **GCA**
+  (GenBank, assembly only). BUSCO genome mode does not care, but anything that
+  needs a reference GFF is only available for the GCF accessions.
+
+### *Ixodes ricinus* assemblies — two, not interchangeable
+
+| Assembly | Used for | Where |
+|----------|----------|-------|
+| **BIPAA assembly 1.0** + OGS 1.3 proteins | HISAT2 read mapping, transcript assembly, BLAST against the official gene set | [`01_data_processing/03_transcriptome_assembly/`](01_data_processing/03_transcriptome_assembly/), [`02_annotation/01_blast_curation/`](02_annotation/01_blast_curation/) |
+| **[GCA_964199275.3](https://www.ncbi.nlm.nih.gov/datasets/genome/GCA_964199275.3/)** (IXRI_v3), chromosome-level | miniprot chromosomal placement and the ideogram | [`04_chromosomal_mapping/`](04_chromosomal_mapping/), [`06_figures/`](06_figures/) |
+
+**Coordinates are not transferable between them.** The scaffold-level BIPAA
+assembly is what the reads were mapped to; the chromosome-level IXRI_v3 is what
+the receptors were placed on, because dispersal across chromosomes cannot be
+distinguished from assembly fragmentation on scaffolds.
+
+> Note the near-identical accessions **GCA_964199275.3** (*I. ricinus*,
+> chromosome-level) and **GCA_964199295.2** (*I. persulcatus*, row 8). They differ
+> by two digits and belong to different species.
+
+### Other reference data
+
+| Dataset | Source |
+|---------|--------|
 | *D. melanogaster* receptor references | FlyBase |
 | *Argiope bruennichi* receptor references | published repertoire |
-| Kraken2 standard database | NCBI RefSeq (build date matters — see [01.02](01_data_processing/02_taxonomic_classification/)) |
+| Kraken2 standard database | NCBI RefSeq — **record the build date**, results are not comparable across builds (see [01.02](01_data_processing/02_taxonomic_classification/)) |
 
 **Raw reads** will be deposited in the NCBI SRA under BioProject
 `PRJNA[pending]` on publication.

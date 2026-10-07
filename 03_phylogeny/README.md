@@ -40,9 +40,16 @@ I_persulcatus   I_ricinus       I_scapularis    O_turicata
 R_microplus     R_sanguineus
 ```
 
-14 species: 2 *Amblyomma*, 4 *Dermacentor*, 2 *Haemaphysalis*, 3 *Ixodes*,
-1 *Ornithodoros* (the soft-tick outgroup, Argasidae), 2 *Rhipicephalus*.
-Line order **is** the array index — appending is safe, reordering is not.
+14 species: 4 *Dermacentor*, 3 *Ixodes*, 2 *Amblyomma*, 2 *Rhipicephalus*,
+1 *Hyalomma*, 1 *Haemaphysalis*, and 1 *Ornithodoros* — the latter the only
+Argasidae in the set, serving as the **soft-tick outgroup**.
+
+⚠️ **`H_asiaticum` is *Hyalomma*, `H_longicornis` is *Haemaphysalis*.** The two
+genera collide under the same abbreviation; resolve them against the accession
+table in the [root README](../README.md#tick-genomes) rather than guessing.
+
+Line order **is** the array index — appending is safe, reordering is not. The
+accession for each line is in that same table, in the same order.
 
 ## Pipeline
 
