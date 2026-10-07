@@ -5,7 +5,7 @@ Analysis code for:
 > **Ancestral clustering and appendage-restricted expression define the
 > chemosensory receptor repertoire of *Ixodes ricinus***
 >
-> Zaide Montes-Ortiz, Qi Wang, Tomas Larsson, Dan-Dan Zhang, Christer Löfstedt
+> Zaide Montes-Ortiz, Qi Wang, Dan-Dan Zhang, 
 >
 > *BMC Genomics* — **in preparation**
 
