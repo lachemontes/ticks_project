@@ -42,6 +42,60 @@ pipeline from people who wrote their methods down properly and put them online.
 This guide is me paying that forward. If something here is unclear, it is my fault,
 not yours — open an issue.
 
+The pipeline was executed between 2022 and 2026 on the Swedish NAISS systems
+(primarily the Dardel cluster at PDC). Scripts carry three different `#SBATCH -A`
+allocations reflecting this history, and some data paths point to a legacy
+project ID. See the 'Clusters and allocations' section below.
+
+### Pipeline overview
+
+Numbers in brackets are the step sections under **Analysis** below.
+
+```
+ raw reads  (16 PE libraries: appendages vs. body, female and male)
+        |
+        |-- FastQC / MultiQC ---------------->  QC report              [1]
+        |
+   Trim Galore                                                        [1]
+        |
+        |-- Kraken2 ------------------------->  contamination screen   [2]
+        |
+        |------------------+------------------+
+        v                  v                  |
+  HISAT2 -> StringTie   Trinity               |   two parallel          [3]
+   (genome-guided)      (de novo, external)   |   assemblies
+        |                  |                  |
+        +-- TransDecoder --+                  |
+                 |                            |
+             CD-HIT ----> BUSCO --------------+
+                 |
+                 v
+        +--- reciprocal BLASTp ---+
+        |    + InterProScan       |   curation: homology,            [4][5]
+        |    + length filter      |   domains, length >= 200 aa
+        +------------+------------+
+                     v
+        curated receptor set  (80 IR/iGluR; GR, PPK, TRP)
+                     |
+     +-----------+---+--------+--------------+---------------+
+     v           v            v              v               v
+  MAFFT +    miniprot ->   residue        MEME ->       hybrid CDS ->
+  IQ-TREE    ideogram      analysis     TOMTOM/FIMO       kallisto
+    [6]       [9][11]        [7]            [8]             [10]
+     |           |            |              |               |
+  ancestral  dispersed    IR / iGluR    conserved GR     appendage-
+  clustering  in genome    boundary         motif         restricted
+                                                          expression
+```
+
+The five branches below the curated set map onto the paper's two claims.
+Phylogeny [6] and chromosomal mapping [9] together establish **ancestral
+clustering** — the tree alone cannot distinguish it from recent local
+duplication, which is why the mapping is load-bearing rather than decorative.
+Quantification [10] establishes **appendage-restricted expression**. The residue
+analysis [7] and motif discovery [8] support the annotation itself rather than
+either claim directly.
+
 ## Data description
 
 ### Sequencing
@@ -145,6 +199,39 @@ is unhelpful. Just always:
 ```bash
 mkdir -p logs
 ```
+
+---
+
+## Software versions
+
+| Tool | Version | Used in step |
+|------|---------|--------------|
+| FastQC | 0.11.9 | 1 |
+| MultiQC | 1.12 | 1 |
+| Trim Galore | 0.6.1 | 1 |
+| Cutadapt | 2.1 | 1 |
+| Kraken2 | 2.1.3 | 2 |
+| HISAT2 | 2.2.1 | 3 |
+| SAMtools | 1.17 | 3 |
+| StringTie | 2.2.1 | 3 |
+| Trinity | 2.14.0 | 3 (external) |
+| TransDecoder | 5.7.0 | 3 |
+| CD-HIT | 4.8.1 | 3, 4, 8 |
+| BUSCO | 5.5.0 | 3 |
+| QUAST | 5.2.0 | 3 |
+| BLAST+ | 2.9.0 | 4 |
+| seqkit | 2.3.1 | 4 |
+| InterProScan | 5.52-86.0 | 5 |
+| MAFFT | 7.520 | 6 |
+| IQ-TREE | 2.2.2.6 | 6 |
+| miniprot | 0.13 | 9 |
+| MEME Suite | 5.5.5 | 8 |
+| kallisto | 0.48.0 | 10 |
+| MG2C | 2.1 (web) | figures |
+| iTOL | 6 (web) | figures |
+
+Report build dates alongside versions where results depend on a reference
+database (notably Kraken2 and InterProScan).
 
 ---
 
