@@ -26,36 +26,37 @@ Run in numeric order.
 | Script | Tool | Description |
 |--------|------|-------------|
 | `18_hybrid_cds_builder.sh` | seqkit | Builds the 98-sequence hybrid CDS FASTA: 81 StringTie + 17 Trinity transcripts, pulled by ID list from the two TransDecoder CDS outputs. Verifies the count and reports any missing IDs |
-| `19_kallisto_claudia.sh` | kallisto | Builds the index from the hybrid CDS — run **once** |
-| `20_kallisto_quent.sh` | kallisto | Quantification, **unstranded** (array 1–16). The safe first pass |
-| `20_kallisto_quent_fr-stranded.sh` | kallisto | Same with `--fr-stranded` |
-| `20_kallisto_quent_RFstranded.sh` | kallisto | Same with `--rf-stranded` |
+| `19_kallisto_index.sh` | kallisto | Builds the index from the hybrid CDS — run **once** |
 
-### On the three quantification scripts
+### Quantification is not scripted in this repository
 
-All three exist because library strandedness was **determined empirically**, not
-assumed. The procedure: run unstranded first, read `p_pseudoaligned` from
-`run_info.json`, then run both stranded variants and keep whichever matches the
-unstranded rate. The wrong strandedness setting roughly halves the
-pseudoalignment rate, which is unmistakable in the logs. Each script prints its
-own rate:
+The `kallisto quant` step is **not** included here — only the hybrid CDS build
+and the index. Run it yourself against the index produced by
+`19_kallisto_index.sh`, the same way the Trinity assembly sits outside this
+repository (see
+[`../01_data_processing/03_transcriptome_assembly/`](../01_data_processing/03_transcriptome_assembly/)).
 
-```
-Pseudoalignment rate: 72.4% pseudoaligned (18,203,118 / 25,141,002 reads)
-```
+Two things to get right when you do:
 
-Compare across all three before choosing:
+**Strandedness must be determined empirically, not assumed.** Quantify once
+unstranded, read `p_pseudoaligned` from `run_info.json`, then repeat with
+`--rf-stranded` and `--fr-stranded` and keep whichever matches the unstranded
+rate. The wrong setting roughly halves the pseudoalignment rate, which is
+unmistakable once you look:
 
 ```bash
-for d in analysis/kallisto{,/frstranded,/rfstranded}/*/; do
+for d in analysis/kallisto/*/; do
     printf '%-55s ' "$d"
-    python3 -c "import json,sys; print(json.load(open('$d/run_info.json'))['p_pseudoaligned'])" 2>/dev/null || echo "-"
+    python3 -c "import json; print(json.load(open('$d/run_info.json'))['p_pseudoaligned'])" 2>/dev/null || echo "-"
 done
 ```
 
 For the dUTP protocols typical of Illumina stranded mRNA kits, `--rf-stranded`
 is the expected answer — but verify rather than assume, and state the chosen
 setting in the methods.
+
+**Bootstrap replicates.** `kallisto quant` without `-b` writes point estimates
+only. Add `-b 100` if you intend to use sleuth for differential testing.
 
 ## Input
 
@@ -90,7 +91,7 @@ those two columns together must be unique.
 |------|---------|
 | `analysis/kallisto/hybrid_CDS_receptors.fasta` | The 98-sequence hybrid CDS |
 | `analysis/kallisto/hybrid_CDS_full.idx` | kallisto index |
-| `analysis/kallisto[/{fr,rf}stranded]/<sample>_<tissue>/abundance.tsv` | **The results table**: `target_id`, `length`, `eff_length`, `est_counts`, `tpm` |
+| `analysis/kallisto/<sample>_<tissue>/abundance.tsv` | **The results table**: `target_id`, `length`, `eff_length`, `est_counts`, `tpm` |
 | `.../abundance.h5` | Same plus bootstrap replicates (for sleuth) |
 | `.../run_info.json` | `n_processed`, `n_pseudoaligned`, `p_pseudoaligned` — the diagnostic |
 
@@ -98,8 +99,8 @@ Assemble the TPM matrix for the heatmaps:
 
 ```bash
 # One column per sample, rows = transcripts
-paste <(cut -f1 analysis/kallisto/rfstranded/*/abundance.tsv | head -99) \
-      $(for d in analysis/kallisto/rfstranded/*/; do echo "<(cut -f5 $d/abundance.tsv)"; done)
+paste <(cut -f1 analysis/kallisto/*/abundance.tsv | head -99) \
+      $(for d in analysis/kallisto/*/; do echo "<(cut -f5 $d/abundance.tsv)"; done)
 ```
 
 or, more robustly, in R with `tximport`.
@@ -111,10 +112,6 @@ or, more robustly, in R with `tximport`.
 | kallisto | 0.48.0 | `index`: defaults (*k* = 31); `quant`: `--threads 12`, paired-end, 16 libraries |
 | seqkit | 2.3.1 | `grep -f` |
 
-No bootstrap replicates were requested (`-b` is absent), so `abundance.h5`
-carries point estimates only. Add `-b 100` if you intend to use sleuth for
-differential testing.
-
 ## How to run
 
 ```bash
@@ -124,22 +121,18 @@ mkdir -p logs
 sbatch 18_hybrid_cds_builder.sh
 
 # 2. Index — once, after step 1 completes
-sbatch 19_kallisto_claudia.sh
+sbatch 19_kallisto_index.sh
 
-# 3. Quantify; start unstranded, then test both stranded variants
-sbatch 20_kallisto_quent.sh
-sbatch 20_kallisto_quent_RFstranded.sh
-sbatch 20_kallisto_quent_fr-stranded.sh
+# 3. Quantify (not scripted here — see the section above)
 ```
 
 Notes:
 
-- **Index filename mismatch.** `19_kallisto_claudia.sh` writes
-  `hybrid_CDS_full.idx` (from `hybrid_CDS_full.fasta`), while the two stranded
-  scripts read `hybrid_CDS_receptors.idx` and `18_hybrid_cds_builder.sh` writes
-  `hybrid_CDS_receptors.fasta`. **Reconcile these names before submitting** —
-  point all three at one index, or the stranded runs fail on the missing-index
-  check.
+- **Index filename mismatch.** `18_hybrid_cds_builder.sh` writes
+  `hybrid_CDS_receptors.fasta`, but `19_kallisto_index.sh` reads
+  `hybrid_CDS_full.fasta` and writes `hybrid_CDS_full.idx`. **Reconcile the two
+  before submitting**, and point your `quant` command at whichever index you
+  actually built.
 - `18_hybrid_cds_builder.sh` flags its `GG_CDS` / `DN_CDS` paths as needing
   adjustment (`⚠️` in the script). Confirm the actual TransDecoder output names
   first.

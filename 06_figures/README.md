@@ -51,7 +51,7 @@ samtools faidx GCA_964199275.3_IXRI_v3_genomic.fna
 cut -f1,2 GCA_964199275.3_IXRI_v3_genomic.fna.fai > chromosome_lengths.txt
 ```
 
-`11_miniprot_claudia.sh` already does this — the notebook documents it for
+`11_miniprot.sh` already does this — the notebook documents it for
 standalone use. Keep only the chromosome-scale scaffolds (`OX3874*` for IXRI_v3);
 unplaced contigs clutter the ideogram.
 

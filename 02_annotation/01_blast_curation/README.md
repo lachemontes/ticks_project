@@ -9,7 +9,7 @@ reduce them to one non-redundant sequence per locus.
 The searches run in **both directions** on purpose:
 
 - *reference → tick* finds candidates we would otherwise miss
-  (`15_blast_iGluRs_claudia.sh`, `10_blast_*.sh`, `12_blastp_proteomes.sh`);
+  (`15_blast_iGluRs.sh`, `10_blast_*.sh`, `12_blastp_proteomes.sh`);
 - *tick → reference* confirms that each candidate's best match really is the
   intended family rather than a paralogous channel
   (`17_blast_IR_iGlur_cdhit100_db.sh`).
@@ -20,15 +20,15 @@ A candidate is retained when both directions agree.
 
 | Script | Tool | Query → Database | Description |
 |--------|------|------------------|-------------|
-| `10_blast_claudia_receptors.sh` | tBLASTn | PPK, TRP references → *I. ricinus* **genome** | Locates receptor loci in genomic sequence; builds `Iricinus_genomic_DB` |
-| `10_blastp_claudia_receptors.sh` | BLASTp | PPK, TRP references → *I. ricinus* OGS1.3 proteins | Protein-level equivalent of the above |
+| `10_blast_receptors.sh` | tBLASTn | PPK, TRP references → *I. ricinus* **genome** | Locates receptor loci in genomic sequence; builds `Iricinus_genomic_DB` |
+| `10_blastp_receptors.sh` | BLASTp | PPK, TRP references → *I. ricinus* OGS1.3 proteins | Protein-level equivalent of the above |
 | `10_blast_GRfer_BMC.sh` | BLASTp | `GR_ref.fasta` → `GR_BMC_proteins.fasta` | Validates the curated GR set against the references |
 | `10_blast_ref_TRP_PPKs.sh` | BLASTp | `PPK_ref`, `TRP_ref` → the curated PPK/TRP sets | Same validation for PPKs and TRPs, as a two-entry loop |
 | `10_blast_9new_danda.sh` | `seqkit grep` + BLASTp | 9 new iGluR candidates → both proteomes | Follow-up on 9 sequences added late in curation; IDs are hard-coded in the script |
 | `12_blastp_proteomes.sh` | BLASTp | `IR_iGluR_final_80.fasta` → genome-guided **and** *de novo* proteomes | SLURM array; the search that establishes which of the 80 receptors are present in which assembly. Reports `slen` so transcript completeness can be compared |
-| `15_blast_iGluRs_claudia.sh` | BLASTp | `IR_iGluRs_Dmel_abru.fasta` → `IR_iGlur_cdhit100.fasta` | Reference → tick direction for IRs/iGluRs |
+| `15_blast_iGluRs.sh` | BLASTp | `IR_iGluRs_Dmel_abru.fasta` → `IR_iGlur_cdhit100.fasta` | Reference → tick direction for IRs/iGluRs |
 | `17_blast_IR_iGlur_cdhit100_db.sh` | BLASTp | `IR_iGlur_cdhit100.fasta` → `IR_iGluRs_Dmel_abru.fasta` | Reciprocal of `15_`; the confirmation step |
-| `16_cd_hit_IRs_claudia.sh` | seqkit + CD-HIT | — | Strips gaps, then collapses IR/iGluR candidates at **100 % identity** and drops sequences **< 200 aa** |
+| `16_cd_hit_IRs.sh` | seqkit + CD-HIT | — | Strips gaps, then collapses IR/iGluR candidates at **100 % identity** and drops sequences **< 200 aa** |
 | `13_seqkit_receptores.sh` | seqkit | — | Pulls CDS and peptide sequences for GR / PPK / TRP from both assemblies using ID lists; reports which IDs failed to match |
 | `best_hits_by_pident.py` | Python/pandas | — | Reduces an outfmt-6 table to one best hit per query |
 
@@ -103,18 +103,18 @@ retrieve sequences by accession afterwards.
 mkdir -p logs
 
 # 1. Non-redundant IR/iGluR candidate set
-sbatch 16_cd_hit_IRs_claudia.sh
+sbatch 16_cd_hit_IRs.sh
 
 # 2. Both BLAST directions
-sbatch 15_blast_iGluRs_claudia.sh          # reference -> tick
+sbatch 15_blast_iGluRs.sh          # reference -> tick
 sbatch 17_blast_IR_iGlur_cdhit100_db.sh    # tick -> reference
 
 # 3. The 80-receptor set against both proteomes
 sbatch 12_blastp_proteomes.sh              # array; see note below
 
 # 4. Other families
-sbatch 10_blastp_claudia_receptors.sh
-sbatch 10_blast_claudia_receptors.sh
+sbatch 10_blastp_receptors.sh
+sbatch 10_blast_receptors.sh
 sbatch 10_blast_ref_TRP_PPKs.sh
 sbatch 10_blast_GRfer_BMC.sh
 

@@ -192,29 +192,6 @@ original submission script, unmodified.
 
 ---
 
-## Citation
-
-Please cite the paper:
-
-```bibtex
-@article{MontesOrtiz2026_Iricinus_chemoreceptors,
-  author  = {Montes-Ortiz, Zaide and Wang, Qi and Zhang, Dan-Dan},
-  title   = {Comprehensive characterization of the chemosensory receptor
-             repertoire of {\emph{Ixodes ricinus}} ticks reveals distinct
-             genomic organization and appendage-biased expression},
-  year    = {2026},
-  note    = {In preparation},
-  doi     = {<DOI on acceptance>}
-}
-```
-
-<!-- Add journal, volume, pages and DOI on acceptance. -->
-
-To cite the code itself, use the repository URL:
-<https://github.com/lachemontes/ticks_project>
-
----
-
 ## License
 
 [MIT](LICENSE) © 2026 Zaide Montes-Ortiz

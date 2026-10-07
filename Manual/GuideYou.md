@@ -37,10 +37,10 @@ design choices make sense:
    appendages and nearly absent elsewhere. This is why the libraries are
    tissue-split (appendages vs. rest-of-body) in both sexes, 16 in total.
 
-Before I start: before **ChatGPT** and friends, I learned how to document a
-pipeline from people who wrote their methods down properly and put them online.
-This guide is me paying that forward. If something here is unclear, it is my fault,
-not yours — open an issue.
+Before I start: I learned how to document a pipeline from people who wrote their
+methods down properly and put them online, in enough detail that a stranger could
+re-run them. This guide is me paying that forward. If something here is unclear,
+it is my fault, not yours — open an issue.
 
 The pipeline was executed between 2022 and 2026 on the Swedish NAISS systems
 (primarily the Dardel cluster at PDC). Scripts carry three different `#SBATCH -A`
@@ -382,17 +382,17 @@ cat $TICKS/analysis/hisat/logs/concatenated_hisat2_mapping_rate.txt
 #### SAM → BAM, and a note on three scripts
 
 There are three `samTobam` scripts because I kept making this faster. Use
-**`06_samTobam_gemini.sh`**:
+**`06_samTobam_streamed.sh`**:
 
 ```bash
-sbatch 06_samTobam_gemini.sh  # array 1-16
+sbatch 06_samTobam_streamed.sh  # array 1-16
 ```
 
 | Script | What it does | Verdict |
 |--------|--------------|---------|
 | `05_samToBam.sh` | view → write BAM → sort → index, then merges inside array task 1 | superseded; the in-array merge is a race condition waiting to happen |
-| `06_samTobam_gemini.sh` | `samtools view \| samtools sort` streamed in one pass, no intermediate BAM | **use this** |
-| `06_samTobam_gpt.sh` | same, with an explicit node-local `/scratch` temp dir for sorting | use if your sort runs out of temp space |
+| `06_samTobam_streamed.sh` | `samtools view \| samtools sort` streamed in one pass, no intermediate BAM | **use this** |
+| `06_samTobam_scratch.sh` | same, with an explicit node-local `/scratch` temp dir for sorting | use if your sort runs out of temp space |
 
 The merge is now its own job, which is the right way round:
 
@@ -448,19 +448,19 @@ This confused me for a while, so: the two CD-HIT runs answer different questions
 | Step | Threshold | Purpose |
 |------|-----------|---------|
 | `07_cd-hit_2.sh` (assembly) | `-c 0.98` | Collapse *assembly artefacts* — isoform fragments and near-identical duplicate contigs. Allowing 2 % divergence removes noise |
-| `16_cd_hit_IRs_claudia.sh` (curation) | `-c 1.0`, `-l 199` | Collapse only *exact* duplicates. Receptor paralogues can be >98 % identical and are **biologically real** — collapsing them would delete genes from the repertoire |
+| `16_cd_hit_IRs.sh` (curation) | `-c 1.0`, `-l 199` | Collapse only *exact* duplicates. Receptor paralogues can be >98 % identical and are **biologically real** — collapsing them would delete genes from the repertoire |
 
 Using 0.98 at the curation stage would quietly shrink the gene family you are
 trying to count.
 
 #### BUSCO
 
-Four scripts, run as the assemblies were revised. `buco_claudia.sh` is the single
+Four scripts, run as the assemblies were revised. `busco_all_runs.sh` is the single
 most complete summary — four runs covering both assemblies in both `protein` and
 `transcriptome` mode:
 
 ```bash
-sbatch buco_claudia.sh
+sbatch busco_all_runs.sh
 ```
 
 Lineage is `arthropoda_odb10` everywhere. Two entry points appear across the
@@ -490,7 +490,7 @@ A candidate is in the final set only if it clears all three:
 
 The searches run in both directions and a candidate must satisfy both:
 
-- **reference → tick** finds candidates. `15_blast_iGluRs_claudia.sh`,
+- **reference → tick** finds candidates. `15_blast_iGluRs.sh`,
   `12_blastp_proteomes.sh`
 - **tick → reference** confirms them. `17_blast_IR_iGlur_cdhit100_db.sh`
 
@@ -503,18 +503,18 @@ distinguishes them.
 mkdir -p logs
 
 # 1. non-redundant candidate set
-sbatch 16_cd_hit_IRs_claudia.sh
+sbatch 16_cd_hit_IRs.sh
 
 # 2. both directions
-sbatch 15_blast_iGluRs_claudia.sh
+sbatch 15_blast_iGluRs.sh
 sbatch 17_blast_IR_iGlur_cdhit100_db.sh
 
 # 3. the 80-receptor set against both proteomes
 sbatch --array=0 12_blastp_proteomes.sh     # note the --array override
 
 # 4. other families
-sbatch 10_blastp_claudia_receptors.sh
-sbatch 10_blast_claudia_receptors.sh
+sbatch 10_blastp_receptors.sh
+sbatch 10_blast_receptors.sh
 sbatch 10_blast_ref_TRP_PPKs.sh
 sbatch 10_blast_GRfer_BMC.sh
 
@@ -574,7 +574,7 @@ the wrong family.
 
 ```bash
 sbatch 09_InterPro_2.sh         # whole proteome: 24-48 h — start this early
-sbatch 09_interpro_claudia.sh   # curated set: 1-2 h
+sbatch 09_interpro_receptors.sh   # curated set: 1-2 h
 ```
 
 Applications are deliberately restricted to `PANTHER,CDD,Pfam,SUPERFAMILY,TMHMM`.
@@ -613,7 +613,7 @@ awk -F'\t' '$4=="TMHMM" {c[$1]++} END {for (s in c) print s"\t"c[s]}' *.tsv
 ```
 
 **Two gotchas:** strip trailing `*` from your peptides first (step 3 does this),
-and note that `09_interpro_claudia.sh` **skips any query whose `.tsv` already
+and note that `09_interpro_receptors.sh` **skips any query whose `.tsv` already
 exists** — delete the output to force a re-run.
 
 ### 6. Phylogeny
@@ -814,7 +814,7 @@ which means reporting noise.
 📁 [`04_chromosomal_mapping/`](../04_chromosomal_mapping/)
 
 ```bash
-sbatch 11_miniprot_claudia.sh    # ~1-2 h, 16 cores, 80 GB
+sbatch 11_miniprot.sh    # ~1-2 h, 16 cores, 80 GB
 ```
 
 #### Why this analysis carries weight
@@ -865,10 +865,8 @@ that looks fine.
 
 ```bash
 sbatch 18_hybrid_cds_builder.sh   # must report 98 sequences
-sbatch 19_kallisto_claudia.sh     # index, once
-sbatch 20_kallisto_quent.sh                # unstranded
-sbatch 20_kallisto_quent_RFstranded.sh     # --rf-stranded
-sbatch 20_kallisto_quent_fr-stranded.sh    # --fr-stranded
+sbatch 19_kallisto_index.sh       # index, once
+# kallisto quant is not scripted in this repo - see below
 ```
 
 #### The hybrid CDS set
@@ -890,14 +888,18 @@ and receptors against each other. They are **not** whole-transcriptome TPMs and
 must not be compared to published transcriptome-wide values. Say so in the methods;
 it is the kind of thing a careful reviewer checks.
 
-#### Why three quantification scripts
+#### Quantification itself is not scripted here
 
-Because strandedness was **determined empirically rather than assumed**. The wrong
-setting roughly halves the pseudoalignment rate, which is unmistakable once you
-look. Run all three, then compare:
+The repo carries the hybrid CDS build and the index, but **not** the
+`kallisto quant` step — like the Trinity assembly in step 3, you run it yourself.
+Two things to get right when you do.
+
+**Determine strandedness empirically rather than assuming it.** The wrong setting
+roughly halves the pseudoalignment rate, which is unmistakable once you look.
+Quantify once unstranded, then once with each stranded flag, and compare:
 
 ```bash
-for d in $TICKS/analysis/kallisto{,/frstranded,/rfstranded}/*/; do
+for d in $TICKS/analysis/kallisto/*/; do
     printf '%-60s ' "$d"
     python3 -c "import json;print(json.load(open('$d/run_info.json'))['p_pseudoaligned'])" 2>/dev/null || echo -
 done
@@ -907,6 +909,9 @@ Keep the stranded setting whose rate matches the unstranded run; the other will 
 visibly worse. For the dUTP-based Illumina stranded mRNA kits, `--rf-stranded` is
 the expected answer — but **verify it**, and state which setting you used.
 
+**Pass `-b 100`** if you want bootstrap replicates for sleuth; without `-b`,
+`abundance.h5` holds point estimates only.
+
 #### ⚠️ The index filename mismatch
 
 This one will stop you, so fix it before you submit:
@@ -914,13 +919,12 @@ This one will stop you, so fix it before you submit:
 | Script | Filename it uses |
 |--------|------------------|
 | `18_hybrid_cds_builder.sh` writes | `hybrid_CDS_receptors.fasta` |
-| `19_kallisto_claudia.sh` reads/writes | `hybrid_CDS_full.fasta` → `hybrid_CDS_full.idx` |
-| `20_*_stranded.sh` read | `hybrid_CDS_receptors.idx` |
-| `20_kallisto_quent.sh` reads | `hybrid_CDS_full.idx` |
+| `19_kallisto_index.sh` reads/writes | `hybrid_CDS_full.fasta` → `hybrid_CDS_full.idx` |
 
-Pick one name and make all four agree. Otherwise the stranded runs die on the
-missing-index check — which is at least a loud failure, unlike most of the traps
-in this pipeline.
+The builder and the indexer disagree, so **reconcile the two before submitting**
+and point your `quant` command at whichever index you actually built. Otherwise
+kallisto dies on a missing index — at least a loud failure, unlike most of the
+traps in this pipeline.
 
 Also: `18_hybrid_cds_builder.sh` flags its `GG_CDS` / `DN_CDS` paths with a `⚠️`
 in the script itself. Confirm your actual TransDecoder output filenames first.
@@ -985,32 +989,31 @@ sbatch kraken2.sh
 # ── 2. Assembly ──
 sbatch 03_histat_idex.sh                 # wait
 sbatch 03_hisat_main.sh                  # array 1-32, wait
-sbatch 06_samTobam_gemini.sh             # array 1-16, wait
+sbatch 06_samTobam_streamed.sh             # array 1-16, wait
 sbatch 07_merge_bam_dardel.sh            # wait
 sbatch 08_stringtie.sh                   # wait
 sbatch 06_Transdecoder_manual.sh         # wait
 sbatch 07_cd-hit_2.sh
-sbatch buco_claudia.sh
+sbatch busco_all_runs.sh
 
 # ── 3. Annotation ──
 sbatch 09_InterPro_2.sh                  # start early, runs 1-2 days
-sbatch 16_cd_hit_IRs_claudia.sh
-sbatch 15_blast_iGluRs_claudia.sh
+sbatch 16_cd_hit_IRs.sh
+sbatch 15_blast_iGluRs.sh
 sbatch 17_blast_IR_iGlur_cdhit100_db.sh
 sbatch --array=0 12_blastp_proteomes.sh
-sbatch 09_interpro_claudia.sh
+sbatch 09_interpro_receptors.sh
 bash   13_seqkit_receptores.sh
 
 # ── 4. Downstream (parallel) ──
 sbatch --array=0-3 14_phylotree.sh
-sbatch 11_miniprot_claudia.sh
+sbatch 11_miniprot.sh
 sbatch meme_motif_discovery.sh           # wait
 sbatch tomtom_cross_species.sh
 sbatch fimo_scan.sh
 sbatch 18_hybrid_cds_builder.sh          # wait
-sbatch 19_kallisto_claudia.sh            # wait
-sbatch 20_kallisto_quent.sh
-sbatch 20_kallisto_quent_RFstranded.sh
+sbatch 19_kallisto_index.sh              # wait
+# kallisto quant: run manually, see step 10
 
 # ── 5. Notebooks ──
 # Residues_iGluRs_IRs.ipynb   (needs the MAFFT alignment from 14_phylotree.sh)

@@ -22,7 +22,7 @@ emits exon structure as GFF, which is what the ideogram needs.
 
 | Script | Tool | Description |
 |--------|------|-------------|
-| `11_miniprot_claudia.sh` | samtools + miniprot | Indexes the genome, writes a chromosome-length table, then splice-aware-aligns a receptor protein set to the genome |
+| `11_miniprot.sh` | samtools + miniprot | Indexes the genome, writes a chromosome-length table, then splice-aware-aligns a receptor protein set to the genome |
 
 The script is written to be re-run per receptor family — edit the `CONFIG` block
 at the top:
@@ -89,7 +89,7 @@ required because the ideogram parser reads the GFF with pandas.
 
 ```bash
 mkdir -p logs
-sbatch 11_miniprot_claudia.sh          # ~1-2 h, 16 cores, 80 GB
+sbatch 11_miniprot.sh          # ~1-2 h, 16 cores, 80 GB
 ```
 
 Notes:

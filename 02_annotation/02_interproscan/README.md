@@ -17,9 +17,9 @@ BLAST-assigned family were flagged for manual inspection.
 | Script | Target | Description |
 |--------|--------|-------------|
 | `09_InterPro_2.sh` | Whole *de novo* proteome | Annotates `transcripts_final_busco_inter_pep_98_denovo.fasta`; the broad pass that supplies GO terms for the full peptide set |
-| `09_interpro_claudia.sh` | Curated receptor set | Loops over the files in `QUERIES`, skipping any whose `.tsv` already exists; adds GFF3 output. Currently set to `iqtree_final_80iric_phylo2026_zm.fasta` (the 80-receptor alignment input) |
+| `09_interpro_receptors.sh` | Curated receptor set | Loops over the files in `QUERIES`, skipping any whose `.tsv` already exists; adds GFF3 output. Currently set to `iqtree_final_80iric_phylo2026_zm.fasta` (the 80-receptor alignment input) |
 
-`09_interpro_claudia.sh` is the one to edit when adding a new receptor set — append
+`09_interpro_receptors.sh` is the one to edit when adding a new receptor set — append
 to the `QUERIES` array.
 
 ## Input
@@ -68,7 +68,7 @@ awk -F'\t' '$4=="TMHMM" {c[$1]++} END {for (s in c) print s"\t"c[s]}' *.tsv
 | InterProScan | 5.52-86.0 | `-t p -goterms --cpu 8` |
 
 Applications: `PANTHER,CDD,Pfam,SUPERFAMILY,TMHMM`
-Formats: `TSV,XML` (`09_InterPro_2.sh`) / `TSV,XML,GFF3` (`09_interpro_claudia.sh`)
+Formats: `TSV,XML` (`09_InterPro_2.sh`) / `TSV,XML,GFF3` (`09_interpro_receptors.sh`)
 
 The application subset is deliberate — the full default set (which adds
 SignalP, PRINTS, ProSite, Gene3D, …) takes several times longer and adds nothing
@@ -79,7 +79,7 @@ for these families.
 ```bash
 mkdir -p logs
 sbatch 09_InterPro_2.sh          # whole proteome: ~24-48 h, 8 cores, 30 GB
-sbatch 09_interpro_claudia.sh    # curated set:    ~1-2 h,  8 cores, 40 GB
+sbatch 09_interpro_receptors.sh    # curated set:    ~1-2 h,  8 cores, 40 GB
 ```
 
 Notes:
@@ -87,7 +87,7 @@ Notes:
 - Both scripts load `InterProScan/5.52-86.0` via `module`. The PANTHER and
   TMHMM data files must be installed in the InterProScan distribution — on a
   fresh install, run `python3 setup.py -f interproscan.properties` once.
-- `09_interpro_claudia.sh` **skips any query whose `.tsv` already exists.**
+- `09_interpro_receptors.sh` **skips any query whose `.tsv` already exists.**
   Delete the output to force a re-run.
 - The whole-proteome run is the long pole of the annotation step. Submit it early
   and continue with the BLAST curation while it finishes.

@@ -37,8 +37,8 @@ Numeric prefixes reflect the order they were run in.
 | `03_hisat_main.sh` | HISAT2 | Map 32 trimmed libraries to the index (array 1–32). **This is the version that was used** |
 | `03_hisat.sh` | HISAT2 | Earlier variant expecting `_R*_paired.fastq.gz` names; kept for provenance, superseded |
 | `05_samToBam.sh` | samtools | SAM → BAM, sort, index, then merge in array task 1. Superseded by the two scripts below |
-| `06_samTobam_gemini.sh` | samtools | Streamed `view \| sort` in one pass — faster, no intermediate BAM. **Preferred** |
-| `06_samTobam_gpt.sh` | samtools | Same with an explicit node-local `/scratch` temp dir for sorting |
+| `06_samTobam_streamed.sh` | samtools | Streamed `view \| sort` in one pass — faster, no intermediate BAM. **Preferred** |
+| `06_samTobam_scratch.sh` | samtools | Same with an explicit node-local `/scratch` temp dir for sorting |
 | `07_merge_bam_dardel.sh` | samtools | Merge all `*_sorted.bam` into `merged_all_samples.bam` + index (separate job, replaces the merge inside `05_`) |
 | `08_stringtie.sh` | StringTie | Genome-guided assembly on the merged BAM → `final_transcriptome_assembly_2.gtf` + gene abundances |
 | `08_stringtie2.sh` | StringTie | **Incomplete stub** (`stringtie` with no arguments). Kept only to document the parameter block; use `08_stringtie.sh` |
@@ -53,12 +53,12 @@ Numeric prefixes reflect the order they were run in.
 | Script | Tool | Description |
 |--------|------|-------------|
 | `08_busco.sh` | BUSCO (protein) | Single run on the genome-guided peptide set |
-| `buco_claudia.sh` | BUSCO | Loop over 4 runs: *de novo* pep, genome-guided pep, TransDecoder CDS, CD-HIT CDS |
+| `busco_all_runs.sh` | BUSCO | Loop over 4 runs: *de novo* pep, genome-guided pep, TransDecoder CDS, CD-HIT CDS |
 | `21_busco_proteome.sh` | BUSCO | *de novo* set in both `protein` and `transcriptome` mode |
 | `22_busco_transcriptome.sh` | BUSCO | Genome-guided vs. *de novo* CDS, both in `transcriptome` mode |
 
 The four BUSCO scripts overlap by design — they were run as the assemblies were
-revised. `buco_claudia.sh` is the most complete single summary.
+revised. `busco_all_runs.sh` is the most complete single summary.
 
 ## Input
 
@@ -121,14 +121,14 @@ sbatch 01_busco_genomes.sh          # array 0,2-6
 # ── RNA-seq track ──
 sbatch 03_histat_idex.sh            # once; wait for it to finish
 sbatch 03_hisat_main.sh             # array 1-32
-sbatch 06_samTobam_gemini.sh        # array 1-16; wait for the whole array
+sbatch 06_samTobam_streamed.sh        # array 1-16; wait for the whole array
 sbatch 07_merge_bam_dardel.sh
 sbatch 08_stringtie.sh
 sbatch 06_Transdecoder_manual.sh
 sbatch 07_cd-hit_2.sh
 
 # ── Completeness ──
-sbatch buco_claudia.sh
+sbatch busco_all_runs.sh
 ```
 
 Notes:
