@@ -226,6 +226,7 @@ mkdir -p logs
 | IQ-TREE | 2.2.2.6 | 6 |
 | miniprot | 0.13 | 9 |
 | MEME Suite | 5.5.5 | 8 |
+| GNU grep | 3.7 | 8 |
 | kallisto | 0.48.0 | 10 |
 | MG2C | 2.1 (web) | figures |
 | iTOL | 6 (web) | figures |
@@ -747,67 +748,133 @@ positions cannot be verified.
 
 📁 [`02_annotation/03_motif_discovery_GR/`](../02_annotation/03_motif_discovery_GR/)
 
-> ⚠️ **Reconstructed step.** Rebuilt from the surviving `meme.html` /
-> `tomtom.html` / `fimo.html` headers. Parameters are those in the reports.
+> The full analysis record — every parameter justified, all results in context —
+> is [`ANALYSIS.md`](../02_annotation/03_motif_discovery_GR/ANALYSIS.md) in that
+> folder. What follows is the short version.
 
 Three steps, strictly in order:
 
 ```bash
+cd 02_annotation/03_motif_discovery_GR
+mkdir -p logs meme_output tomtom_output fimo_output
+
 sbatch meme_motif_discovery.sh   # ~30 min
 # wait, then:
 sbatch tomtom_cross_species.sh
 sbatch fimo_scan.sh
 ```
 
+#### What comes out
+
+An eight-residue signature — TY, five hydrophobic positions, terminal Q —
+recovered independently in tick and spider:
+
+| Species | Motif | Sites | E-value |
+|---------|-------|-------|---------|
+| *I. ricinus* | **TYTVILVQ** | 46 / 65 | 4.2 × 10⁻²⁰ |
+| *A. bruennichi* | **TYGVIIYQ** | 35 + 242 within motif 1 | 1.4 × 10⁻⁰⁸ |
+| *D. melanogaster* | variable | — | not significant alone |
+
 #### MEME — discover
 
 ```bash
-cd-hit -i Iric_GR.fasta -o Iric_GR_nr.fasta -c 0.90 -n 5     # Iric ONLY
-fasta-shuffle-letters -kmer 1 -seed 42 input > shuffled
-meme input -neg shuffled -objfun de -protein -nmotifs 1 -maxw 12 -oc out
+cd-hit -i Iric_GR.fasta -o Iric_GR_nr90.fasta -c 0.90 -n 5 -M 0 -T 8 -d 0   # Iric ONLY
+fasta-shuffle-letters -kmer 1 -seed 42 -dna false <in>.fasta <in>_shuffled.fasta
+meme <in>.fasta -neg <in>_shuffled.fasta -objfun de -protein -mod zoops \
+     -nmotifs 1 -minw 6 -maxw 12 -evt 0.05 -seed 42 -p 8 -oc meme_output/<SP>_maxw12
 ```
 
 Every one of those choices is load-bearing:
 
 | Parameter | Why |
 |-----------|-----|
-| `-objfun de` + `-neg` | Differential enrichment against a shuffled control. A motif that is just amino-acid composition bias scores no better than the control and does not survive |
-| `-kmer 1 -seed 42` | The control preserves composition and length distribution **exactly**. Fixed seed so the control is reproducible — an unseeded shuffle makes your E-values unrepeatable |
+| `-objfun de` + `-neg` | Differential enrichment against a shuffled control. A motif that is only composition bias scores no better than the control and does not survive |
+| `-kmer 1 -seed 42` | The control preserves composition and length distribution **exactly**. Fixed seed so it is reproducible — an unseeded shuffle makes your E-values unrepeatable |
+| `-mod zoops` | Zero or one occurrence per sequence — right for a domain that some paralogues may have lost |
 | `-nmotifs 1` | The question is whether *a* shared motif exists, not an exhaustive catalogue |
-| `-maxw 12` | Upper bound on width |
-| `-c 0.90` **Iric only** | *I. ricinus* GRs include recent tandem duplicates. Without this, MEME recovers a motif driven entirely by one expanded clade — you find a within-clade signature and mistake it for a family-wide one. Abru and Dmel sets are already non-redundant and pass through unchanged |
+| `-minw 6 -maxw 12` | See the width note below |
+| CD-HIT `-c 0.90`, **Iric only** | Tick GRs include recent tandem duplicates; without this, MEME recovers a motif driven by one expanded clade — a within-clade signature mistaken for a family-wide one. Abru and Dmel are already non-redundant and pass through unchanged |
 
-Check that MEME found something real before going on:
+#### ⚠️ The width setting changes what you see
 
-```bash
-grep -A2 'MOTIF' $TICKS/analysis/meme/Iric/meme_run/meme.txt | head -20
-```
+Run at **two** widths, because they answer different questions:
 
-A motif with E-value > 0.05 should not be carried forward, no matter how pretty
-the logo is.
+- `-maxw 50` returns the motif **embedded** in a longer conserved block (in
+  *A. bruennichi*, a 24-residue `TAWGIFPLKRSLILSSFGTLLTYG` ending in TY). This is
+  what the original spider analysis recovered, and there the fifth hydrophobic
+  position had to be read off the adjacent alignment column.
+- `-maxw 12` forces MEME to **isolate the core** and return it standalone, so that
+  fifth position falls inside the motif and the observation rests on the MEME
+  output alone.
+
+`maxw12` is the primary result. Keep `maxw50` for comparability with the published
+*Argiope* analysis.
+
+#### ⚠️ An earlier run without a control gave E-values of 10⁻⁶⁸¹
+
+That is not a typo, and it is not a good result. Without `-neg`, MEME scored the
+motif against a zero-order background, and recent paralogues are not independent —
+they share composition and local sequence. The E-values were inflated by orders of
+magnitude and are **not reported anywhere**. If you ever see an E-value like that
+in a gene family with recent duplicates, the control is missing.
 
 #### TOMTOM and FIMO — why both
 
 They answer different questions, and you need both:
 
-- **TOMTOM** compares *motif to motif*. It asks: is the motif MEME found
-  independently in *I. ricinus* the **same motif** it found in *Argiope* and in
-  *Drosophila*?
-- **FIMO** compares *motif to sequences*. It asks: **which individual
-  *Drosophila* GRs** actually carry the tick motif, and how significantly?
+- **TOMTOM** compares *motif to motif*. Is the motif found independently in
+  *I. ricinus* the **same motif** as in *Argiope* and in *Drosophila*?
+- **FIMO** compares *motif to sequences*. **Which individual** *Drosophila* GRs
+  carry the tick motif, and how significantly?
 
 TOMTOM establishes correspondence; FIMO localises it to specific genes. One
-without the other is half an argument.
+without the other is half an argument. Run all **three** TOMTOM pairs — the
+spider-vs-fly comparison is what shows the signal is not tick-specific.
 
 ```bash
-tomtom -oc out Iric/meme.txt Abru/meme.txt     # and Iric vs Dmel
-fimo --oc out --thresh 0.05 --qv-thresh Iric/meme.txt Dmel_GR.fasta
+tomtom -evalue -thresh 10 -min-overlap 5 -dist pearson -oc out <query>.txt <target>.txt
+fimo --oc out --thresh 0.05 --qv-thresh --max-stored-scores 100000 <meme>.txt Dmel_GR.fasta
 ```
 
-Note `--qv-thresh`: it makes `--thresh` apply to the **q-value**, so this reports
-matches at *q* < 0.05 — FDR-corrected across every position scanned. Without that
-flag you would be reporting raw *p*-values across tens of thousands of positions,
-which means reporting noise.
+#### ⚠️ p-values from TOMTOM, q-values from FIMO — not the other way round
+
+This is the easiest thing to get wrong in this step.
+
+| Tool | Read | Why |
+|------|------|-----|
+| **TOMTOM** | **p-values only** | The target databases hold 10–15 motifs each. TOMTOM cannot estimate `pi_0` and says so in its output. Its FDR correction is unreliable; the p-values depend only on the alignment statistics and are fine. `-evalue` moves the output off the q-value default |
+| **FIMO** | **q-values** | `pi_0` comes from 10,000+ scanned p-values (one per position × sequence), so the correction is well calibrated. `--qv-thresh` makes `--thresh 0.05` apply to the q-value |
+
+Quoting a TOMTOM q-value here would be quoting a number its own output warns you
+about. Quoting a FIMO raw p-value, across tens of thousands of positions, would be
+quoting noise.
+
+#### The results, and the sanity check
+
+| Comparison | Statistic |
+|------------|-----------|
+| tick vs. spider (offset 0, overlap 8/8) | p = 9.4 × 10⁻⁰⁸ |
+| tick vs. *D. melanogaster* | p = 2.0 × 10⁻⁰⁵ |
+| spider vs. *D. melanogaster* | p = 5.6 × 10⁻⁰⁴ |
+| tick motif in *Dmel* GRs (FIMO, q < 0.05) | 40 / 68 |
+| literal `TY[ILVFAM]{5}Q` in *Dmel* (grep) | 13 |
+
+`fimo_scan.sh` finishes with a plain `grep` for `TY[ILVFAM]{5}Q`, and that is
+deliberate: it confirms the pattern is really in the *Drosophila* sequences rather
+than an artefact of a PWM trained on ticks. A model-free check that agrees with the
+model is worth more than a smaller p-value. The closest literal match is
+**TYMVILVQ** in two sequences — one conservative substitution (T → M) from the tick
+consensus.
+
+Check the motif before going on:
+
+```bash
+grep -A2 'MOTIF' meme_output/Iric_maxw12/meme.txt | head -20
+# expected: TYTVILVQ, E = 4.2e-20
+```
+
+A motif with E-value > 0.05 should not be carried forward, no matter how pretty
+the logo is.
 
 ### 9. Chromosomal mapping
 

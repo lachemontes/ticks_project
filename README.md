@@ -135,6 +135,7 @@ environments otherwise.
 | seqkit | 2.3.1 | 02.01, 05 |
 | InterProScan | 5.52-86.0 | 02.02 |
 | MEME Suite | 5.5.5 | 02.03 |
+| GNU grep | 3.7 | 02.03 |
 | MAFFT | 7.520 | 03 |
 | IQ-TREE | 2.2.2.6 | 03 |
 | miniprot | 0.13 | 04 |
@@ -236,11 +237,14 @@ project allocation changed over the course of the work
 follow (`naiss2023-23-109` vs `naiss2025-23-132`). **Check both the `#SBATCH -A`
 line and the paths before submitting any script.**
 
-Two reconstructed steps are flagged in their own READMEs: the original scripts for
-[QC/trimming](01_data_processing/01_qc_trimming/) and
-[GR motif discovery](02_annotation/03_motif_discovery_GR/) were lost, and the
-committed versions were rebuilt from logs and tool reports. Everything else is the
-original submission script, unmodified.
+One reconstructed step is flagged in its own README: the original scripts for
+[QC/trimming](01_data_processing/01_qc_trimming/) were lost and the committed
+versions were rebuilt from the MultiQC report and the trimming logs. The
+[GR motif discovery](02_annotation/03_motif_discovery_GR/) scripts were also lost,
+but are reconstructed from the author's own analysis record
+([`ANALYSIS.md`](02_annotation/03_motif_discovery_GR/ANALYSIS.md)), which documents
+every command line and parameter — so they are faithful, not inferred. Everything
+else is the original submission script, unmodified.
 
 ---
 

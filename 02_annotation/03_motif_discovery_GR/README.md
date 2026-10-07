@@ -1,125 +1,155 @@
 # 02.03 — GR motif discovery
 
-## ⚠️ Note on provenance
-
-The three scripts in this folder were **reconstructed** from the MEME Suite HTML
-reports and command lines recorded in the output directories; the original
-submission scripts were lost. The parameters below are the ones in the surviving
-`meme.html` / `tomtom.html` / `fimo.html` headers and reproduce the published
-results.
-
 ## Purpose
 
-Test whether the *I. ricinus* gustatory receptors share a conserved motif, and
-whether that motif is detectable in the GR repertoires of a non-tick chelicerate
-(*Argiope bruennichi*) and an insect (*Drosophila melanogaster*).
+Test whether the *Ixodes ricinus* gustatory receptors share a conserved
+C-terminal motif, and whether that motif is detectable in the GR repertoires of a
+non-tick chelicerate (*Argiope bruennichi*) and an insect (*Drosophila
+melanogaster*).
 
-The logic is three steps:
+The result is a conserved **eight-residue S7b signature** — TY, five hydrophobic
+positions, terminal Q — recovered independently in tick and spider and detectable
+in *Drosophila*:
 
-1. **MEME** — discover a motif *de novo*, per species, against a shuffled
-   background so that composition bias alone cannot produce a hit;
-2. **TOMTOM** — ask whether the motif found in *I. ricinus* is the *same motif*
-   as the ones found independently in the other two species;
-3. **FIMO** — ask whether the *I. ricinus* motif occurs in individual
-   *D. melanogaster* GR sequences, with per-sequence significance.
+| Species | Motif | Sites | E-value | Coverage |
+|---------|-------|-------|---------|---------:|
+| *I. ricinus* | **TYTVILVQ** | 46 / 65 | 4.2 × 10⁻²⁰ | 71 % |
+| *A. bruennichi* | **TYGVIIYQ** | 35 standalone + 242 within motif 1 | 1.4 × 10⁻⁰⁸ | 84 % |
+| *D. melanogaster* | variable | — | not significant alone | 59 % (by FIMO) |
 
-TOMTOM compares motifs to motifs; FIMO compares a motif to sequences. Both are
-needed: TOMTOM establishes that the motifs correspond, FIMO establishes which
-sequences actually carry it.
+**Full analysis record, with every parameter justified and the results in
+context: [`ANALYSIS.md`](ANALYSIS.md).** Read that before changing anything here.
 
 ## Scripts
 
-| Script | Tool | Description |
-|--------|------|-------------|
-| `meme_motif_discovery.sh` | CD-HIT + `fasta-shuffle-letters` + MEME | Per species: redundancy reduction (Iric only), shuffled control, then motif discovery |
-| `tomtom_cross_species.sh` | TOMTOM | Iric motif vs. Abru motif; Iric motif vs. Dmel motif |
-| `fimo_scan.sh` | FIMO | Iric motif scanned against the *D. melanogaster* GR repertoire |
+| Script | Tools | Description |
+|--------|-------|-------------|
+| `meme_motif_discovery.sh` | CD-HIT, `fasta-shuffle-letters`, MEME | CD-HIT on *I. ricinus* only, shuffled controls, then MEME at **two widths** (`-maxw 12` primary, `-maxw 50` for comparison) |
+| `tomtom_cross_species.sh` | TOMTOM | All **three** pairwise motif comparisons: Iric↔Abru, Iric↔Dmel, Abru↔Dmel |
+| `fimo_scan.sh` | FIMO, grep | Scans the Iric motif against the *Dmel* GRs at *q* < 0.05, then an independent literal-pattern check |
 
-## Exact parameters
+Run them in that order — each consumes the previous one's output.
 
-### MEME
+## The three design choices that matter
 
-```
-cd-hit -i <Iric_GR.fasta> -o <Iric_GR_nr.fasta> -c 0.90 -n 5       # Iric only
-fasta-shuffle-letters -kmer 1 -seed 42 <input> > <shuffled>
-meme <input> -neg <shuffled> -objfun de -protein -nmotifs 1 -maxw 12 -oc <outdir>
-```
+**1 — CD-HIT on *I. ricinus* only (`-c 0.90`).** Tick GRs include recent tandem
+duplicates; without reduction MEME recovers a motif driven entirely by one
+expanded clade, i.e. a within-clade signature mistaken for a family-wide one. The
+*A. bruennichi* and *D. melanogaster* sets are already non-redundant and pass
+through **unchanged** — reducing them would delete biologically real paralogues.
 
-| Parameter | Value | Why |
-|-----------|-------|-----|
-| `-objfun de` | differential enrichment | Scores the motif against the `-neg` set instead of a zero-order background; required for the shuffled-control design |
-| `-neg` | 1-mer shuffled input, `-seed 42` | Preserves amino-acid composition and length distribution exactly, so a hit cannot be a composition artefact. The fixed seed makes the control reproducible |
-| `-protein` | — | Protein alphabet |
-| `-nmotifs 1` | 1 | One motif per species — the question is whether *a* shared motif exists, not an exhaustive catalogue |
-| `-maxw 12` | 12 | Upper bound on motif width |
-| CD-HIT `-c 0.90` | 90 % identity, **Iric only** | *I. ricinus* GRs include recent tandem duplicates; without this, MEME recovers a motif driven by a single expanded clade. Abru and Dmel sets are already non-redundant and are passed through unchanged |
+**2 — A composition-matched negative control (`-objfun de -neg`).** `-kmer 1
+-seed 42` shuffling preserves amino-acid composition and length distribution
+exactly, so a motif cannot be a composition artefact (high-Leu TM helices, for
+instance). The fixed seed makes the control reproducible.
 
-### TOMTOM
+> An earlier run **without** a negative control returned E-values of 10⁻⁶⁸¹ to
+> 10⁻⁹⁵⁶. Those were inflated by non-independence among paralogues and are not
+> reported. For protein motif discovery in a gene family with recent duplicates,
+> `-objfun de` plus a shuffled control is not optional.
 
-```
-tomtom -oc <outdir> <query_meme.txt> <target_meme.txt>
-```
+**3 — Two width settings.** At `-maxw 50` the motif comes back embedded at the end
+of a longer conserved block (in *A. bruennichi*, a 24-residue
+`TAWGIFPLKRSLILSSFGTLLTYG` terminating in TY), which is what the original spider
+analysis saw. At `-maxw 12` MEME is forced to isolate the conserved core and
+returns it standalone, so the fifth hydrophobic position falls *inside* the motif
+instead of having to be read off the flanking alignment. **`maxw12` is the primary
+result**; `maxw50` is kept for comparability.
 
-Run twice: Iric vs. Abru, Iric vs. Dmel. Defaults otherwise
-(`-dist pearson`, `-thresh 0.5` on *q*-value — read the reported *q* per match
-rather than relying on the threshold).
+## ⚠️ Read p-values from TOMTOM, q-values from FIMO
 
-### FIMO
+The two tools are not alike here, and getting this backwards misreports the result.
 
-```
-fimo --oc <outdir> --thresh 0.05 --qv-thresh <meme.txt> <Dmel_GR.fasta>
-```
+| Tool | Use | Why |
+|------|-----|-----|
+| **TOMTOM** | **p-values only** | The target databases hold only 10–15 motifs each, so TOMTOM cannot estimate `pi_0` and warns about it. Its FDR correction is unreliable; the p-values depend only on the alignment statistics and are usable. `-evalue` moves the output off the q-value default |
+| **FIMO** | **q-values** | `pi_0` is estimated from 10,000+ scanned p-values (one per position × sequence), so the FDR correction is well calibrated. `--qv-thresh` is what makes `--thresh 0.05` apply to the q-value rather than the raw p-value |
 
-`--qv-thresh` makes `--thresh` apply to the **q-value**, so this reports matches
-at ***q* < 0.05** — FDR-corrected across all sequence positions scanned, not a
-raw *p*-value cutoff.
+Without `--qv-thresh`, FIMO reports raw p-values across tens of thousands of
+positions — which is reporting noise.
+
+## Results
+
+| Comparison | Method | Statistic |
+|------------|--------|-----------|
+| tick vs. spider | TOMTOM, offset 0, overlap 8/8 | **p = 9.4 × 10⁻⁰⁸** |
+| tick vs. *D. melanogaster* | TOMTOM | **p = 2.0 × 10⁻⁰⁵** |
+| spider vs. *D. melanogaster* | TOMTOM | **p = 5.6 × 10⁻⁰⁴** |
+| tick motif scanned in *D. melanogaster* | FIMO, *q* < 0.05 | **40 / 68 GRs** |
+| literal `TY[ILVFAM]{5}Q` in *D. melanogaster* | grep | **13 sequences** |
+
+Tick and spider motifs align position for position with **no offset** across the
+full eight residues. The closest literal *Drosophila* match is **TYMVILVQ** in two
+sequences — one conservative substitution (T → M) from the tick consensus.
+
+The lower *D. melanogaster* coverage is expected: the scanning model was trained
+on tick sequences.
+
+> **Interpretation.** The motif matches across tick, spider and fly, which points
+> to conservation over roughly 500 My rather than chelicerate-specific divergence.
+> See the closing section of [`ANALYSIS.md`](ANALYSIS.md) for what this changes in
+> the *Argiope* text.
 
 ## Input
 
-- `data/phylo/GR_sequences/Iric_GR.fasta` — curated *I. ricinus* GRs
-- `data/phylo/GR_sequences/Abru_GR.fasta` — *Argiope bruennichi* GRs
-- `data/phylo/GR_sequences/Dmel_GR.fasta` — *D. melanogaster* GRs
+Protein FASTA, from [`../01_blast_curation/`](../01_blast_curation/). Set `IN_DIR`
+if they are not in the working directory.
 
-All three are protein FASTA, from [`../01_blast_curation/`](../01_blast_curation/).
-Set `PROJECT` at the top of each script to your project root.
+| File | Sequences | Source |
+|------|----------:|--------|
+| `Iric_GR.fasta` | 71 → **65** after CD-HIT | This study (curated BMC set) |
+| `Abru_GR.fasta` | 368 (~330 non-redundant) | Montes-Ortiz *et al.* 2026 |
+| `Dmel_GR.fasta` | 68 | FlyBase r6.54 |
+
+> The *A. bruennichi* set is the **368-sequence** file, not the full 490-sequence
+> catalogue. Use the same file for strict comparability.
 
 ## Output
 
 | File | Content |
 |------|---------|
-| `analysis/meme/<species>/meme_run/meme.{txt,html,xml}` | Discovered motif: PWM, E-value, site list |
-| `analysis/meme/<species>/<species>_nr.fasta` | CD-HIT-reduced input (Iric) |
-| `analysis/meme/<species>/<species>_shuffled.fasta` | Shuffled control |
-| `analysis/tomtom/Iric_vs_{Abru,Dmel}/tomtom.{tsv,html}` | Motif–motif matches with *p*, *E*, *q*, offset, orientation |
-| `analysis/fimo/Iric_motif_vs_Dmel_GRs/fimo.{tsv,html}` | Per-sequence motif occurrences with *p* and *q* |
-
-`meme.txt` is the input for both TOMTOM and FIMO — do not delete it.
+| `Iric_GR_nr90.fasta` | CD-HIT-reduced tick set (65 seqs) |
+| `*_shuffled.fasta` | Composition-matched negative controls |
+| `meme_output/<SP>_maxw12/meme.txt` | **Primary motif** — PWM, E-value, site list. Input to TOMTOM and FIMO; do not delete |
+| `meme_output/<SP>_maxw12/meme.html`, `logo1.png` | Report and sequence logo |
+| `meme_output/<SP>_maxw50/` | Wider-window comparison run |
+| `tomtom_output/<pair>/tomtom.tsv` | Motif–motif alignments with p, E, q, offset, orientation |
+| `fimo_output/Iric_motif_vs_Dmel_GRs/fimo.tsv` | Per-sequence occurrences with q-values |
 
 ## Software versions
 
 | Tool | Version |
 |------|---------|
-| MEME Suite (`meme`, `tomtom`, `fimo`, `fasta-shuffle-letters`) | 5.5.5 |
 | CD-HIT | 4.8.1 |
+| MEME Suite (`meme`, `tomtom`, `fimo`, `fasta-shuffle-letters`) | 5.5.5 |
+| GNU grep | 3.7 |
 
-Cite as Bailey *et al.* (2015) *Nucleic Acids Res* 43:W39–W49.
+Cite the MEME Suite as Bailey *et al.* (2015) *Nucleic Acids Res* 43:W39–W49.
 
 ## How to run
 
-Strictly in order — each step consumes the previous one's output.
-
 ```bash
-mkdir -p logs
-sbatch meme_motif_discovery.sh     # ~30 min, 8 cores
-# wait for completion, then:
-sbatch tomtom_cross_species.sh     # ~5 min
-sbatch fimo_scan.sh                # ~5 min
+cd 02_annotation/03_motif_discovery_GR
+mkdir -p logs meme_output tomtom_output fimo_output
+
+sbatch meme_motif_discovery.sh   # ~30 min, 8 cores
+# wait for it to finish, then:
+sbatch tomtom_cross_species.sh   # ~5 min
+sbatch fimo_scan.sh              # ~5 min
 ```
 
-Check that MEME actually found something before running TOMTOM:
+Check that MEME found something before going on:
 
 ```bash
-grep -A2 'MOTIF' analysis/meme/Iric/meme_run/meme.txt | head -20
+grep -A2 'MOTIF' meme_output/Iric_maxw12/meme.txt | head -20
+# expected: TYTVILVQ, E = 4.2e-20
 ```
 
-A motif with E-value > 0.05 should not be carried forward.
+A motif with E-value > 0.05 should not be carried forward, however good the logo
+looks.
+
+### Reproducibility
+
+Every random step is seeded with `-seed 42`. Changing the seed produces slightly
+different shuffled controls and MEME starting points; the recovered motifs should
+be stable to within ±1 position.
