@@ -58,7 +58,7 @@ that is detectable in both the spider and the *Drosophila* GR repertoires.
 | &nbsp;&nbsp;[`03_motif_discovery_GR/`](02_annotation/03_motif_discovery_GR/) | MEME, TOMTOM, FIMO |
 | &nbsp;&nbsp;[`04_residue_analysis_IR/`](02_annotation/04_residue_analysis_IR/) | Glutamate-binding residue scoring |
 | [`03_phylogeny/`](03_phylogeny/) | MAFFT + IQ-TREE gene trees |
-| [`04_chromosomal_mapping/`](04_chromosomal_mapping/) | miniprot against the chromosome-level assembly |
+| [`04_chromosomal_mapping/`](04_chromosomal_mapping/) | miniprot placement on the *I. ricinus* assembly |
 | [`05_expression/`](05_expression/) | kallisto quantification across 16 libraries |
 | [`06_figures/`](06_figures/) | Ideogram preparation; notes on the other figures |
 | [`Supplementary/`](Supplementary/) | Additional files for the manuscript |
@@ -195,21 +195,18 @@ Two things to watch:
   (GenBank, assembly only). BUSCO genome mode does not care, but anything that
   needs a reference GFF is only available for the GCF accessions.
 
-### *Ixodes ricinus* assemblies — two, not interchangeable
+### The *Ixodes ricinus* assembly
 
-| Assembly | Used for | Where |
-|----------|----------|-------|
-| **BIPAA assembly 1.0** + OGS 1.3 proteins | HISAT2 read mapping, transcript assembly, BLAST against the official gene set | [`01_data_processing/03_transcriptome_assembly/`](01_data_processing/03_transcriptome_assembly/), [`02_annotation/01_blast_curation/`](02_annotation/01_blast_curation/) |
-| **[GCA_964199275.3](https://www.ncbi.nlm.nih.gov/datasets/genome/GCA_964199275.3/)** (IXRI_v3), chromosome-level | miniprot chromosomal placement and the ideogram | [`04_chromosomal_mapping/`](04_chromosomal_mapping/), [`06_figures/`](06_figures/) |
+Everything in this project — read mapping, transcript assembly, BLAST against the
+official gene set, and the chromosomal placement — uses the single **BIPAA
+assembly 1.0** (row 9 above), with its **OGS 1.3** protein set for the
+annotation-based searches.
 
-**Coordinates are not transferable between them.** The scaffold-level BIPAA
-assembly is what the reads were mapped to; the chromosome-level IXRI_v3 is what
-the receptors were placed on, because dispersal across chromosomes cannot be
-distinguished from assembly fragmentation on scaffolds.
-
-> Note the near-identical accessions **GCA_964199275.3** (*I. ricinus*,
-> chromosome-level) and **GCA_964199295.2** (*I. persulcatus*, row 8). They differ
-> by two digits and belong to different species.
+| Used for | Where |
+|----------|-------|
+| HISAT2 read mapping, transcript assembly | [`01_data_processing/03_transcriptome_assembly/`](01_data_processing/03_transcriptome_assembly/) |
+| BLAST against the official gene set (OGS 1.3) | [`02_annotation/01_blast_curation/`](02_annotation/01_blast_curation/) |
+| miniprot placement and the ideogram | [`04_chromosomal_mapping/`](04_chromosomal_mapping/), [`06_figures/`](06_figures/) |
 
 ### Other reference data
 
@@ -257,7 +254,7 @@ original submission script, unmodified.
 
 **Zaide Montes-Ortiz**
 Department of Biology, Lund University
-📧 [zaide_katherine.montes_ortiz@biol.lu.se](mailto:zaide_katherine.montes_ortiz@biol.lu.se)
+📧 [zaide.montes_ortiz@biol.lu.se](mailto:zaide.montes_ortiz@biol.lu.se)
 🐙 [@lachemontes](https://github.com/lachemontes)
 
 For questions about a specific step, check that folder's `README.md` first — each
