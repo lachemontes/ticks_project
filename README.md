@@ -2,8 +2,9 @@
 
 Analysis code for:
 
-> **Ancestral clustering and appendage-restricted expression define the
-> chemosensory receptor repertoire of *Ixodes ricinus***
+> **Comprehensive characterization of the chemosensory receptor
+repertoire of Ixodes ricinus ticks reveals distinct genomic organization and
+appendage-biased expression**
 >
 > Zaide Montes-Ortiz, Qi Wang, Dan-Dan Zhang, 
 >
