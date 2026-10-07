@@ -16,30 +16,14 @@ Analysis code for:
 
 ## Abstract
 
-Ticks locate and identify hosts through chemical cues, yet the molecular basis of
-chemoreception in Acari remains poorly characterised compared with insects. We
-annotated and characterised the chemosensory receptor repertoire of the sheep
-tick *Ixodes ricinus*, the principal vector of Lyme borreliosis in Europe,
-combining genome-guided and *de novo* transcriptome assembly across appendage and
-body tissues of both sexes.
+Background
+Ticks transmit a wider range of pathogens than any other arthropod vector. Current control strategies rely largely on acaricides and synthetic repellents, raising concerns of toxicity, environmental impact and the development of resistance. The tick chemosensory system plays a critical role in host seeking, feeding and mating, making it a promising target for developing alternative control agents. Ticks lack antennae and instead detect chemical signals through Haller's organ on the first legs and gustatory sensilla on the mouthparts. Yet our understanding of the underlying chemosensory receptor genes remains limited. In particular, none of them has been functionally linked to a ligand.
+Results
+We curated the chemosensory receptor (CR) gene repertoire of Ixodes ricinus from a chromosome-level genome, and profiled receptor expression across sixteen RNA-seq libraries spanning nymphs and different body parts of adult males and females (mouthparts, first legs, fourth legs and the remaining body). The repertoire comprises 183 CR genes across four families: 71 gustatory receptors (GRs), 80 ionotropic receptors (IRs)/ionotropic glutamate receptors (iGluRs), 20 transient receptor potential (TRP) channels and 12 pickpocket (PPK) receptors. The four receptor families showed pronounced genomic clustering, with 52% of GRs located on chromosome 5, all twelve kainate receptors on chromosome 4 and all five AMPA receptors on chromosome X. Multi-species phylogenies placed these duplications before the divergence of Ixodes species or even before the tick–spider split, supporting the retention of ancestral synteny rather than recent lineage-specific expansion. Ninety-eight of CR genes had high-confidence expressed transcripts. Seventeen showed expression restricted to the first legs, including the conserved co-receptors IricIR25a and IricIR93a together with six other IRs, while another set was restricted to the mouthparts, reflecting the anatomical division between olfactory and contact chemoreception.
+Conclusions
+We provide a comprehensive, stringently curated chemosensory receptor repertoire of I. ricinus and revealed patterns of genomic organization and evolutionary diversification across receptor families. Tissue-biased expression identified both conserved co-receptors and tick-specific receptors as candidates for peripheral chemosensation, particularly in the first legs bearing Haller's organ and in the mouthparts. These findings provide a framework for functional characterization of tick CRs and for understanding the molecular basis of tick sensory biology.
+<img width="468" height="650" alt="image" src="https://github.com/user-attachments/assets/1ace467f-6d70-44cc-8ad6-e18ab7bb69c8" />
 
-Two features define the repertoire. First, the receptors do not form
-lineage-specific expansions: phylogenetic reconstruction including a spider
-(*Argiope bruennichi*) and an insect (*Drosophila melanogaster*) places the tick
-receptors across clades that already contain the non-tick references, and
-chromosomal mapping shows them dispersed rather than arranged in tandem arrays —
-an **ancestral clustering** pattern indicating retention from an already
-diversified ancestral set rather than recent local duplication. Second,
-expression is strongly **restricted to the appendages**, the tissues bearing the
-chemosensory organs, consistent with a sensory rather than a general physiological
-role.
-
-We resolve the ionotropic receptor (IR) / ionotropic glutamate receptor (iGluR)
-boundary on the state of the glutamate-binding residues rather than on sequence
-identity alone, and identify a conserved motif in the tick gustatory receptors
-that is detectable in both the spider and the *Drosophila* GR repertoires.
-
-*(Working abstract — to be replaced with the accepted version on publication.)*
 
 ---
 
