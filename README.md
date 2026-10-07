@@ -8,7 +8,7 @@ appendage-biased expression**
 >
 > Zaide Montes-Ortiz, Qi Wang, Dan-Dan Zhang, 
 >
-> *BMC Genomics* — **in preparation**
+> — **in preparation**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
