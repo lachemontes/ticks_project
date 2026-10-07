@@ -2,12 +2,12 @@
 
 ## Project Description
 
-This guide walks through the complete analysis behind *"Ancestral clustering and
-appendage-restricted expression define the chemosensory receptor repertoire of
-Ixodes ricinus"*. It is written for the person who has to run this again — a new
-student in the group, a reviewer who wants to check a step, or me in two years
-when I have forgotten why the CD-HIT threshold is 0.98 in one place and 1.0 in
-another.
+This guide walks through the complete analysis behind *"Comprehensive
+characterization of the chemosensory receptor repertoire of Ixodes ricinus ticks
+reveals distinct genomic organization and appendage-biased expression"*. It is
+written for the person who has to run this again — a new student in the group, a
+reviewer who wants to check a step, or me in two years when I have forgotten why
+the CD-HIT threshold is 0.98 in one place and 1.0 in another.
 
 *Ixodes ricinus* is the sheep tick, the main European vector of *Borrelia
 burgdorferi* s.l. and tick-borne encephalitis virus. It finds its host by smell

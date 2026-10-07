@@ -2,13 +2,13 @@
 
 Analysis code for:
 
-> **Comprehensive characterization of the chemosensory receptor
-repertoire of Ixodes ricinus ticks reveals distinct genomic organization and
-appendage-biased expression**
+> **Comprehensive characterization of the chemosensory receptor repertoire of
+> *Ixodes ricinus* ticks reveals distinct genomic organization and
+> appendage-biased expression**
 >
-> Zaide Montes-Ortiz, Qi Wang, Dan-Dan Zhang, 
+> Zaide Montes-Ortiz, Qi Wang, Dan-Dan Zhang
 >
-> — **in preparation**
+> **In preparation**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -198,18 +198,17 @@ Please cite the paper:
 
 ```bibtex
 @article{MontesOrtiz2026_Iricinus_chemoreceptors,
-  author  = {Montes-Ortiz, Zaide and Wang, Qi and Larsson, Tomas and
-             Zhang, Dan-Dan and L{\"o}fstedt, Christer},
-  title   = {Ancestral clustering and appendage-restricted expression define
-             the chemosensory receptor repertoire of {\emph{Ixodes ricinus}}},
-  journal = {BMC Genomics},
+  author  = {Montes-Ortiz, Zaide and Wang, Qi and Zhang, Dan-Dan},
+  title   = {Comprehensive characterization of the chemosensory receptor
+             repertoire of {\emph{Ixodes ricinus}} ticks reveals distinct
+             genomic organization and appendage-biased expression},
   year    = {2026},
   note    = {In preparation},
-  doi     = {10.1186/XXXXX}
+  doi     = {<DOI on acceptance>}
 }
 ```
 
-<!-- Update volume, pages and DOI on acceptance. -->
+<!-- Add journal, volume, pages and DOI on acceptance. -->
 
 To cite the code itself, use the repository URL:
 <https://github.com/lachemontes/ticks_project>
