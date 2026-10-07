@@ -1,0 +1,14 @@
+A_americanum
+A_maculatum
+D_albipictus
+D_andersoni
+D_silvarum
+D_variabilis
+H_asiaticum
+H_longicornis
+I_persulcatus
+I_ricinus
+I_scapularis
+O_turicata
+R_microplus
+R_sanguineus

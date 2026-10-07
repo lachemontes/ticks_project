@@ -1,0 +1,140 @@
+# ─────────────────────────────────────────────────────────────
+# ticks_project — .gitignore
+# This repository holds CODE ONLY. Sequence data, alignments and
+# analysis outputs live on the cluster / in the Zenodo deposit.
+# ─────────────────────────────────────────────────────────────
+
+# ── Raw and trimmed reads ────────────────────────────────────
+*.fastq
+*.fastq.gz
+*.fq
+*.fq.gz
+*_val_1.fq.gz
+*_val_2.fq.gz
+*_trimming_report.txt
+
+# ── Alignments ───────────────────────────────────────────────
+*.sam
+*.bam
+*.bam.bai
+*.bai
+*.cram
+*.crai
+
+# ── Sequence files and indices ───────────────────────────────
+*.fasta
+*.fa
+*.fna
+*.faa
+*.pep
+*.cds
+*.fai
+*.idx
+*.h5
+*.2bit
+
+# BLAST databases
+*.phr
+*.pin
+*.psq
+*.pdb
+*.pot
+*.ptf
+*.pto
+*.nhr
+*.nin
+*.nsq
+*.ndb
+*.not
+*.ntf
+*.nto
+db/
+db_*/
+
+# HISAT2 / bowtie indices
+*.ht2
+*.bt2
+
+# ── Annotation and assembly outputs ──────────────────────────
+*.gtf
+*.gff
+*.gff3
+*.bed
+*.vcf
+*.vcf.gz
+
+# ── Tool output directories ──────────────────────────────────
+logs/
+busco_*/
+run_*/
+quast_results/
+meme_output/
+tomtom_output/
+fimo_output/
+interpro_output/
+kallisto_output/
+*_miniprot.gff
+
+# ── Phylogenetics ────────────────────────────────────────────
+*.treefile
+*.contree
+*.iqtree
+*.ckp.gz
+*.mldist
+*.splits.nex
+*.bionj
+*.model.gz
+*_mafft.fasta
+
+# ── SLURM ────────────────────────────────────────────────────
+slurm-*.out
+*.out
+*.err
+
+# ── Large tables and reports ─────────────────────────────────
+*_fastqc.zip
+*_fastqc.html
+multiqc_data/
+multiqc_report*.html
+abundance.tsv
+abundance.h5
+*.tsv.gz
+
+# ── Keep these small text inputs (negated above) ─────────────
+!tick_species_list.txt
+!*_ids.txt
+!itol_annotations.txt
+
+# ── Python ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+
+# ── R ────────────────────────────────────────────────────────
+.Rhistory
+.RData
+.Rproj.user/
+.Ruserdata
+
+# ── Editors and OS ───────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*~
+
+# ── Staging / scratch ────────────────────────────────────────
+_temp_from_cluster/
+_temp/
+scratch/
+tmp/
